@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: google/cloud-sdk:latest
+      - image: circleci/golang:latest
 
     working_directory: /go/src/github.com/thirstscolr/go-slackbot
     
@@ -14,23 +14,18 @@ jobs:
       - checkout
 
       - run:
-          name: Decode Google Cloud Credentials
-          command: echo ${GOOGLE_AUTH} | base64 -i --decode > ${HOME}/gcp-key.json
-
-      - run:
-          name: Update Google Cloud SDK components
+          name: Configure Google Cloud credentials
           command: |
-            /opt/google-cloud-sdk/bin/gcloud --quiet components update
-            echo $ACCT_AUTH | base64 --decode -i > ${HOME}/account-auth.json
-            /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file ${HOME}/account-auth.json
-            /opt/google-cloud-sdk/bin/gcloud config set project $PROJECT_NAME
-            
+            echo ${GOOGLE_AUTH} | base64 -i --decode > ${HOME}/gcp-key.json
+            gcloud auth activate-service-account --key-file ${HOME}/gcp-key.json
+            gcloud --quiet config set project $PROJECT_NAME
+
 #      - run:
 #          name: Build the container and push to gcr.io
 #          command: |
 #            docker build -t us.gcr.io/${PROJECT_NAME}/hello:$CIRCLE_SHA1 .
-#            docker tag us.gcr.io/${PROJECT_NAME}/hello:$CIRCLE_SHA1 us.gcr.io/${PROJECT_NAME}/hello:latest
+#            docker tag us.gcr.io/${PROJECT_NAME}/go-slackbot:$CIRCLE_SHA1 us.gcr.io/${PROJECT_NAME}/go-slackbot:latest
 
-#      - run: 
-#          name: Run go tests
-#          command: go test -v ./...
+      - run: 
+          name: Run go tests
+          command: go test -v ./...
